@@ -14,7 +14,7 @@ With this library, you can:
 ### Basic Usage
 
 This example shows the basic workflow: convert an instance to a JSON object, write it to a JSON file, and load it back into a class instance.
-It uses the `get_*` helpers during deserialization to provide default values when fields are missing or invalid.
+It uses the `get_*` helpers during deserialization to return default values when fields are missing or invalid.
 
 ```python
 from dataclasses import dataclass
@@ -192,6 +192,36 @@ print(loaded_user)
 # )
 ```
 
+### Collecting Issues
+
+This example shows how the `get_*` helpers collect non-fatal issues in `JsonContext`.
+After reading the JSON object, you can inspect the collected issues and print them.
+
+```python
+from jocl import JsonContext, JsonObject, get_int, get_str
+
+json_object: JsonObject = {
+    "name": 123,
+    # "age" is missing
+}
+
+ctx = JsonContext()
+
+name = get_str(ctx, json_object, "name", default="default name")
+age = get_int(ctx, json_object, "age", default=0)
+
+print(name)
+print(age)
+
+for issue in ctx.get_issues():
+    print(issue)
+
+# default name
+# 0
+# JSON issue at /name: Expected string, got int; severity=WARNING; code=INVALID_TYPE; value_type=int; value=123
+# JSON issue at /age: Missing key; severity=WARNING; code=MISSING_KEY
+```
+
 ## Installation
 
 Copy `jocl.py` into your project and import what you need.
@@ -203,6 +233,7 @@ from jocl import JsonObject, JsonObjectConvertible
 ## Requirements
 
 - Python 3.9+
+- No third-party dependencies
 
 ## License
 
