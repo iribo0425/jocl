@@ -208,7 +208,7 @@ json_object: JsonObject = {
 ctx = JsonContext()
 
 name = get_str(ctx, json_object, "name", default="default name")
-age = get_int(ctx, json_object, "age", default=0)
+age = get_int(ctx, json_object, "age", default=456)
 
 print(name)
 print(age)
@@ -217,7 +217,7 @@ for issue in ctx.get_issues():
     print(issue)
 
 # default name
-# 0
+# 456
 # JSON issue at /name: Expected string, got int; severity=WARNING; code=INVALID_TYPE; value_type=int; value=123
 # JSON issue at /age: Missing key; severity=WARNING; code=MISSING_KEY
 ```
