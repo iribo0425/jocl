@@ -548,40 +548,8 @@ class JsonError(ValueError):
 
         return f"{reason} at {at}"
 
-T_Enum = TypeVar("T_Enum", bound=enum.Enum)
 T_IntEnum = TypeVar("T_IntEnum", bound=enum.IntEnum)
 T_StrEnum = TypeVar("T_StrEnum", bound=StrEnum)
-
-def _find_enum_member_by_value(cls: type[T_Enum], value: JsonPrimitive) -> T_Enum:
-    for member in cls:
-        if member.value is None:
-            if value is None:
-                return cast(T_Enum, member)
-            continue
-
-        if isinstance(member.value, bool):
-            if isinstance(value, bool) and (member.value == value):
-                return cast(T_Enum, member)
-            continue
-
-        if isinstance(member.value, str):
-            if isinstance(value, str) and (member.value == value):
-                return cast(T_Enum, member)
-            continue
-
-        if _is_strict_int(member.value):
-            if _is_strict_int(value) and (cast(int, member.value) == cast(int, value)):
-                return cast(T_Enum, member)
-            continue
-
-        if isinstance(member.value, float):
-            if isinstance(value, float) and math.isfinite(member.value) and (member.value == value):
-                return cast(T_Enum, member)
-            continue
-
-        raise TypeError(f"{cls.__name__}.{member.name} has non-JSON-primitive value: {member.value!r}")
-
-    raise ValueError(f"Invalid {cls.__name__} value: {value!r}")
 
 def validate_json_primitive(ctx: JsonContext, x: object) -> None:
     """Validates that a value is a JSON primitive.
