@@ -212,7 +212,7 @@ class JsonIssue(object):
         _validate_json_value_path(prefix)
         return self.__path[:len(prefix)] == prefix
 
-    def to_full_message(self) -> str:
+    def to_detail_message(self) -> str:
         """Formats the issue as a human-readable message."""
         parts: list[str] = [
             f"JSON issue at {self.get_pointer()}: {self.__message}",
@@ -248,7 +248,7 @@ class JsonIssue(object):
         )
 
     def __str__(self) -> str:
-        return self.to_full_message()
+        return self.to_detail_message()
 
 def _validate_json_issue(x: object) -> None:
     if not isinstance(x, JsonIssue):
@@ -1497,7 +1497,7 @@ def require_str_enum(ctx: JsonContext, json_object: JsonObject, key: str, cls: t
     except ValueError:
         raise JsonError(f"Invalid {cls.__name__} value: {value!r}", child_ctx.get_path())
 
-def convert_convertible_to_json_object(ctx: JsonContext, key: str, convertible: JsonObjectConvertible) -> JsonObject:
+def from_convertible(ctx: JsonContext, key: str, convertible: JsonObjectConvertible) -> JsonObject:
     """Converts an object to a validated JSON object.
 
     The object returned by ``to_json_object()`` is validated with ``key`` appended to ``ctx`` so that failures point to the correct location.
@@ -1526,7 +1526,7 @@ def convert_convertible_to_json_object(ctx: JsonContext, key: str, convertible: 
 
     return json_object
 
-def convert_convertibles_to_json_objects(ctx: JsonContext, key: str, convertibles: Iterable[JsonObjectConvertible]) -> list[JsonObject]:
+def from_convertibles(ctx: JsonContext, key: str, convertibles: Iterable[JsonObjectConvertible]) -> list[JsonObject]:
     """Converts an iterable of objects to validated JSON objects.
 
     Each object returned by ``to_json_object()`` is validated with both ``key`` and the element index appended to ``ctx`` so that failures point to the offending element.
@@ -1602,8 +1602,8 @@ __all__ = [
     "require_array",
     "require_convertible",
     "require_convertibles",
-    "convert_convertible_to_json_object",
-    "convert_convertibles_to_json_objects",
+    "from_convertible",
+    "from_convertibles",
     "append_json_value_path_part",
     "JsonContext",
     "JsonIssueSeverity",
