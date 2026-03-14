@@ -32,16 +32,18 @@ except AttributeError:
         def __str__(self) -> str:
             return str(self.value)
 
+
 def _is_strict_int(x: object) -> bool:
     return type(x) is int
+
 
 JsonPrimitive = Union[str, int, float, bool, None]
 JsonObject = dict[str, "JsonValue"]
 JsonArray = list["JsonValue"]
 JsonValue = Union[JsonObject, JsonArray, JsonPrimitive]
-
 JsonValuePathPart = Union[str, int]
 JsonValuePath = tuple[JsonValuePathPart, ...]
+
 
 def default_json_primitive() -> JsonPrimitive:
     """Returns the default JSON primitive.
@@ -51,6 +53,7 @@ def default_json_primitive() -> JsonPrimitive:
     """
     return None
 
+
 def default_json_object() -> JsonObject:
     """Returns a new empty JSON object.
 
@@ -58,6 +61,7 @@ def default_json_object() -> JsonObject:
         A new empty JSON object.
     """
     return {}
+
 
 def default_json_array() -> JsonArray:
     """Returns a new empty JSON array.
@@ -67,6 +71,7 @@ def default_json_array() -> JsonArray:
     """
     return []
 
+
 def default_json_value() -> JsonValue:
     """Returns the default JSON value.
 
@@ -75,6 +80,7 @@ def default_json_value() -> JsonValue:
     """
     return None
 
+
 def default_json_value_path() -> JsonValuePath:
     """Returns the empty path for the JSON root.
 
@@ -82,6 +88,7 @@ def default_json_value_path() -> JsonValuePath:
         The empty path for the JSON root.
     """
     return ()
+
 
 def _validate_json_value_path_part(x: object) -> None:
     if _is_strict_int(x):
@@ -95,12 +102,14 @@ def _validate_json_value_path_part(x: object) -> None:
 
     raise TypeError(f"Invalid JsonValuePathPart: {type(x).__name__}")
 
+
 def _validate_json_value_path(x: object) -> None:
     if not isinstance(x, tuple):
         raise TypeError(f"JsonValuePath must be tuple, got {type(x).__name__}")
 
     for part in cast(tuple[object, ...], x):
         _validate_json_value_path_part(part)
+
 
 def append_json_value_path_part(path: JsonValuePath, part: JsonValuePathPart) -> JsonValuePath:
     """Appends a part to a path.
@@ -121,11 +130,13 @@ def append_json_value_path_part(path: JsonValuePath, part: JsonValuePathPart) ->
     _validate_json_value_path_part(part)
     return path + (part,)
 
+
 class JsonIssueSeverity(enum.Enum):
     """Severity level for a JSON issue."""
     ERROR = enum.auto()
     WARNING = enum.auto()
     NOTE = enum.auto()
+
 
 class JsonIssueCode(enum.Enum):
     """Machine-readable code for a JSON issue."""
@@ -135,8 +146,10 @@ class JsonIssueCode(enum.Enum):
     VALUE_CONVERSION_FAILED = enum.auto()
     DESERIALIZATION_FAILED = enum.auto()
 
+
 class JsonIssue(object):
     """Structured information about a JSON-related issue worth keeping for later inspection."""
+
 
     def __init__(
         self,
@@ -178,55 +191,68 @@ class JsonIssue(object):
         self.__exception_type_name: Optional[str] = exception_type_name
         self.__exception_message: Optional[str] = exception_message
 
+
     def get_path(self) -> JsonValuePath:
         """Returns the JSON path associated with this issue."""
         return self.__path
+
 
     def get_severity(self) -> JsonIssueSeverity:
         """Returns the issue severity."""
         return self.__severity
 
+
     def get_code(self) -> JsonIssueCode:
         """Returns the issue code."""
         return self.__code
+
 
     def get_message(self) -> str:
         """Returns the human-readable message."""
         return self.__message
 
+
     def get_value_type_name(self) -> Optional[str]:
         """Returns the observed value type name, if available."""
         return self.__value_type_name
+
 
     def get_value_repr(self) -> Optional[str]:
         """Returns the formatted value representation, if available."""
         return self.__value_repr
 
+
     def get_exception_type_name(self) -> Optional[str]:
         """Returns the exception type name, if available."""
         return self.__exception_type_name
 
+
     def get_exception_message(self) -> Optional[str]:
         """Returns the exception message, if available."""
         return self.__exception_message
+
 
     def get_pointer(self) -> str:
         """Returns the issue path as a JSON Pointer-like string."""
         pointer: str = _json_value_path_to_pointer(self.get_path())
         return pointer if pointer else "<root>"
 
+
     def has_value(self) -> bool:
         """Returns whether this issue contains information about the observed value."""
         return self.__value_type_name is not None or self.__value_repr is not None
+
 
     def has_exception(self) -> bool:
         """Returns whether this issue contains exception information."""
         return self.__exception_type_name is not None or self.__exception_message is not None
 
+
     def matches_path_prefix(self, prefix: JsonValuePath) -> bool:
         """Returns whether the issue path starts with ``prefix``."""
         _validate_json_value_path(prefix)
         return self.__path[:len(prefix)] == prefix
+
 
     def to_detail_message(self) -> str:
         """Formats the issue as a human-readable message."""
@@ -250,6 +276,7 @@ class JsonIssue(object):
 
         return "; ".join(parts)
 
+
     def __repr__(self) -> str:
         return (
             "JsonIssue("
@@ -263,12 +290,15 @@ class JsonIssue(object):
             f"exception_message={self.__exception_message!r})"
         )
 
+
     def __str__(self) -> str:
         return self.to_detail_message()
+
 
 def _validate_json_issue(x: object) -> None:
     if not isinstance(x, JsonIssue):
         raise TypeError(f"issue must be JsonIssue, got {type(x).__name__}")
+
 
 def _validate_max_depth(x: object) -> None:
     if not _is_strict_int(x):
@@ -276,6 +306,7 @@ def _validate_max_depth(x: object) -> None:
 
     if cast(int, x) < 0:
         raise ValueError(f"max_depth must be >= 0, got {x}")
+
 
 def _validate_max_issue_value_repr_length(x: object) -> None:
     if x is None:
@@ -287,8 +318,10 @@ def _validate_max_issue_value_repr_length(x: object) -> None:
     if cast(int, x) < 0:
         raise ValueError(f"max_issue_value_repr_length must be >= 0, got {x}")
 
+
 class JsonContext(object):
     """Stores the current JSON path, maximum validation depth, issue formatting settings, and a shared issue buffer."""
+
 
     def __init__(
         self,
@@ -334,24 +367,30 @@ class JsonContext(object):
         self.__max_issue_value_repr_length: Optional[int] = max_issue_value_repr_length
         self.__use_shallow_validation: bool = use_shallow_validation
 
+
     def get_path(self) -> JsonValuePath:
         """Returns the current JSON path."""
         return self.__path
+
 
     def get_max_depth(self) -> int:
         """Returns the maximum validation depth."""
         return self.__max_depth
 
+
     def get_issues(self) -> list[JsonIssue]:
         """Returns the shared issue buffer."""
         return self.__issues
+
 
     def get_max_issue_value_repr_length(self) -> Optional[int]:
         """Returns the maximum length used for issue value representations."""
         return self.__max_issue_value_repr_length
 
+
     def get_use_shallow_validation(self) -> bool:
         return self.__use_shallow_validation
+
 
     def add_issue(self, issue: JsonIssue) -> None:
         """Appends an issue to the shared issue buffer.
@@ -365,9 +404,11 @@ class JsonContext(object):
         _validate_json_issue(issue)
         self.__issues.append(issue)
 
+
     def clear_issues(self) -> None:
         """Clears the shared issue buffer."""
         self.__issues.clear()
+
 
     def create_child(self, path_part: JsonValuePathPart) -> "JsonContext":
         """Creates a child context for a nested path part.
@@ -393,6 +434,7 @@ class JsonContext(object):
             use_shallow_validation=self.get_use_shallow_validation()
         )
 
+
     def create_with_use_shallow_validation(self, use: bool) -> "JsonContext":
         return JsonContext(
             path=self.get_path(),
@@ -402,7 +444,9 @@ class JsonContext(object):
             use_shallow_validation=use
         )
 
+
 _MISSING_ISSUE_VALUE: object = object()
+
 
 def _get_exception_reason(exc: BaseException) -> str:
     if exc.args:
@@ -412,6 +456,7 @@ def _get_exception_reason(exc: BaseException) -> str:
             pass
 
     return exc.__class__.__name__
+
 
 def _record_get_issue(
     ctx: JsonContext,
@@ -462,9 +507,11 @@ def _record_get_issue(
         )
     )
 
+
 T_JsonObjectConvertible = TypeVar("T_JsonObjectConvertible", bound="JsonObjectConvertible")
 class JsonObjectConvertible(abc.ABC):
     """Abstract base class for objects that can be serialized to and deserialized from JSON objects."""
+
 
     @classmethod
     @abc.abstractmethod
@@ -485,6 +532,7 @@ class JsonObjectConvertible(abc.ABC):
         """
         ...
 
+
     @abc.abstractmethod
     def to_json_object(self, ctx: JsonContext) -> JsonObject:
         """Converts this instance to a JSON object.
@@ -501,6 +549,7 @@ class JsonObjectConvertible(abc.ABC):
         """
         ...
 
+
     @classmethod
     @abc.abstractmethod
     def create_default(cls: type[T_JsonObjectConvertible]) -> T_JsonObjectConvertible:
@@ -511,10 +560,13 @@ class JsonObjectConvertible(abc.ABC):
         """
         ...
 
+
 T_Convertible = TypeVar("T_Convertible", bound=JsonObjectConvertible)
+
 
 def _escape_json_pointer_part(part: str) -> str:
     return part.replace("~", "~0").replace("/", "~1")
+
 
 def _json_value_path_to_pointer(path: JsonValuePath) -> str:
     if not path:
@@ -535,12 +587,15 @@ def _json_value_path_to_pointer(path: JsonValuePath) -> str:
 
     return "/" + "/".join(parts)
 
+
 def _format_json_location(path: JsonValuePath) -> str:
     pointer: str = _json_value_path_to_pointer(path)
     return pointer if pointer else "<root>"
 
+
 class JsonError(ValueError):
     """Raised when a JSON-related validation or access error occurs under this module's rules."""
+
 
     def __init__(self, reason: str, path: JsonValuePath):
         """Initializes the error with a reason and a path.
@@ -559,9 +614,11 @@ class JsonError(ValueError):
 
         self.__path: JsonValuePath = path
 
+
     def get_path(self) -> JsonValuePath:
         """Returns the path associated with the error."""
         return self.__path
+
 
     def __str__(self) -> str:
         """Returns the error message including the path."""
@@ -578,6 +635,7 @@ class JsonError(ValueError):
             at = f"<invalid path ({type(e).__name__}: {e}); path={path_repr}>"
 
         return f"{reason} at {at}"
+
 
 def validate_json_primitive(ctx: JsonContext, x: object) -> None:
     """Validates that a value is a JSON primitive.
@@ -614,9 +672,11 @@ def validate_json_primitive(ctx: JsonContext, x: object) -> None:
 
     raise JsonError(f"Expected JSON primitive, got {type(x).__name__}", ctx.get_path())
 
+
 class _StackItem(object):
     DUMMY_OID: ClassVar[int] = -1
     DUMMY_VALUE: ClassVar[object] = object()
+
 
     def __init__(self, discard: bool, oid: int, value: object, depth: int, path: JsonValuePath):
         self.__discard: bool = discard
@@ -625,20 +685,26 @@ class _StackItem(object):
         self.__depth: int = depth
         self.__path: JsonValuePath = path
 
+
     def get_discard(self) -> bool:
         return self.__discard
+
 
     def get_oid(self) -> int:
         return self.__oid
 
+
     def get_value(self) -> object:
         return self.__value
+
 
     def get_depth(self) -> int:
         return self.__depth
 
+
     def get_path(self) -> JsonValuePath:
         return self.__path
+
 
 def validate_json_value(ctx: JsonContext, x: object) -> None:
     """Validates that a value is a JSON value.
@@ -718,6 +784,7 @@ def validate_json_value(ctx: JsonContext, x: object) -> None:
                 item.get_value()
             )
 
+
 def validate_json_object(ctx: JsonContext, x: object) -> None:
     """Validates that a value is a JSON object.
 
@@ -737,6 +804,7 @@ def validate_json_object(ctx: JsonContext, x: object) -> None:
     # Pylance strict cannot infer the precise type here.
     # Container type is checked above; full validation is delegated to validate_json_value().
     validate_json_value(ctx, x)
+
 
 def validate_json_array(ctx: JsonContext, x: object) -> None:
     """Validates that a value is a JSON array.
@@ -819,6 +887,7 @@ def dump_convertible(ctx: JsonContext, convertible: JsonObjectConvertible, path:
     s: str = json.dumps(o, ensure_ascii=False, allow_nan=False, indent=4, sort_keys=True)
     path.write_text(s, encoding="utf-8")
 
+
 def _parse_float(s: str) -> float:
     f: float = float(s)
 
@@ -827,8 +896,10 @@ def _parse_float(s: str) -> float:
 
     return f
 
+
 def _parse_constant(s: str) -> NoReturn:
     raise ValueError(f"Invalid JSON constant: {s}")
+
 
 T = TypeVar("T", bound=JsonObjectConvertible)
 def load_convertible(ctx: JsonContext, cls: type[T], path: pathlib.Path) -> T:
@@ -868,6 +939,10 @@ def load_convertible(ctx: JsonContext, cls: type[T], path: pathlib.Path) -> T:
         return cls.from_json_object(validated_ctx, cast(JsonObject, o))
     except (JsonError, TypeError, ValueError) as e:
         raise TypeError(f"Failed to deserialize {cls.__name__} from {path}: {e}") from e
+
+
+_MISSING_DEFAULT: object = object()
+
 
 T_co = TypeVar("T_co", covariant=True)
 class Factory(Protocol[T_co]):
@@ -926,16 +1001,6 @@ class GetIssueInfo(object):
         )
 
 
-def _normalize_type_or_types(type_or_types: object) -> tuple[object, ...]:
-    if isinstance(type_or_types, tuple):
-        return cast(tuple[object, ...], type_or_types)
-
-    return (type_or_types,)
-
-
-_MISSING_DEFAULT: object = object()
-
-
 class ArrayOf(object):
     def __init__(self, *element_types: object):
         if not element_types:
@@ -966,6 +1031,13 @@ class ValuesOf(object):
 
     def __repr__(self) -> str:
         return f"ValuesOf({self.__value_types!r})"
+
+
+def _normalize_type_or_types(type_or_types: object) -> tuple[object, ...]:
+    if isinstance(type_or_types, tuple):
+        return cast(tuple[object, ...], type_or_types)
+
+    return (type_or_types,)
 
 
 def _resolve_default_value(default: object, types: tuple[object, ...]) -> object:
